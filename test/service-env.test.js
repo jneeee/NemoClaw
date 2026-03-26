@@ -3,6 +3,8 @@
 
 import { describe, it, expect } from "vitest";
 import { execSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { resolveOpenshell } from "../bin/lib/resolve-openshell";
 
 describe("service environment", () => {
@@ -58,6 +60,38 @@ describe("service environment", () => {
         commandVResult: null,
         checkExecutable: () => false,
       })).toBe(null);
+    });
+  });
+
+  describe("ALLOWED_CHAT_IDS propagation", () => {
+    it("ALLOWED_CHAT_IDS is exported and visible to child process", () => {
+      const result = execSync(
+        "bash -c 'export ALLOWED_CHAT_IDS=\"123,456\"; bash -c \"echo $ALLOWED_CHAT_IDS\"'",
+        { encoding: "utf-8", env: { ...process.env } }
+      ).trim();
+      expect(result).toBe("123,456");
+    });
+
+    it("ALLOWED_CHAT_IDS defaults to empty string when unset", () => {
+      const result = execSync(
+        "bash -c 'export ALLOWED_CHAT_IDS=\"${ALLOWED_CHAT_IDS:-}\"; bash -c \"echo \\\"[$ALLOWED_CHAT_IDS]\\\"\"'",
+        {
+          encoding: "utf-8",
+          env: { ...process.env, ALLOWED_CHAT_IDS: "" },
+        }
+      ).trim();
+      expect(result).toBe("[]");
+    });
+
+    it("start-services.sh exports TELEGRAM_BOT_TOKEN without truncation", () => {
+      // Regression test for the $TELEG...OKEN typo: verify the script text
+      // no longer contains the truncated variable reference.
+      const src = fs.readFileSync(
+        path.join(path.dirname(new URL(import.meta.url).pathname), "..", "scripts", "start-services.sh"),
+        "utf-8"
+      );
+      expect(src).not.toMatch(/TELEG\.\.\.OKEN/);
+      expect(src).toMatch(/export TELEGRAM_BOT_TOKEN="\$TELEGRAM_BOT_TOKEN"/);
     });
   });
 

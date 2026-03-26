@@ -142,15 +142,15 @@ do_start() {
   mkdir -p "$PIDDIR"
 
   # Telegram bridge (only if token provided)
-  # Pass all relevant env vars explicitly so they reach the child process
+  # Export env vars explicitly so nohup inherits them in the child process
   # regardless of whether they were exported in the parent shell.
   # ALLOWED_CHAT_IDS controls the chat whitelist in telegram-bridge.js;
   # omitting it causes a silent security bypass (any user can interact).
   if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
-    SANDBOX_NAME="$SANDBOX_NAME" \
-    TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" \
-    ALLOWED_CHAT_IDS="${ALLOWED_CHAT_IDS:-}" \
-      start_service telegram-bridge \
+    export SANDBOX_NAME="$SANDBOX_NAME"
+    export TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN"
+    export ALLOWED_CHAT_IDS="${ALLOWED_CHAT_IDS:-}"
+    start_service telegram-bridge \
       node "$REPO_DIR/scripts/telegram-bridge.js"
   fi
 
