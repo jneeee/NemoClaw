@@ -22,6 +22,10 @@ const PRIVATE_NETWORKS: CidrRange[] = [
 
 const ALLOWED_SCHEMES = new Set(["https:", "http:"]);
 
+// Trusted internal hostnames that are allowed to resolve to private IPs.
+// These are operator-configured, not open to arbitrary attacker control.
+const TRUSTED_INTERNAL_HOSTNAMES = ["host.docker.internal"];
+
 function parseIPv4(addr: string): Uint8Array {
   const parts = addr.split(".");
   return new Uint8Array(parts.map(Number));
@@ -142,8 +146,11 @@ export async function validateEndpointUrl(url: string): Promise<string> {
     throw new Error(`Cannot resolve hostname '${hostname}': ${String(err)}`);
   }
 
+  // Skip private IP check for trusted internal hostnames
+  const isTrustedInternal = TRUSTED_INTERNAL_HOSTNAMES.includes(hostname);
+
   for (const { address } of addresses) {
-    if (isPrivateIp(address)) {
+    if (isPrivateIp(address) && !isTrustedInternal) {
       throw new Error(
         `Endpoint URL resolves to private/internal address ${address}. ` +
           "Connections to internal networks are not allowed.",

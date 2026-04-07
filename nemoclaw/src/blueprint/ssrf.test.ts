@@ -178,4 +178,25 @@ describe("validateEndpointUrl", () => {
     const url = "https://api.example.com/v1/chat/completions";
     await expect(validateEndpointUrl(url)).resolves.toBe(url);
   });
+
+  // ── Trusted internal hostnames ───────────────────────────────
+
+  it("allows host.docker.internal resolving to private IP 172.17.0.1", async () => {
+    mockLookup.mockResolvedValue([{ address: "172.17.0.1", family: 4 }]);
+    const url = "http://host.docker.internal:50001/v1/memory";
+    await expect(validateEndpointUrl(url)).resolves.toBe(url);
+  });
+
+  it("allows host.docker.internal with https scheme", async () => {
+    mockLookup.mockResolvedValue([{ address: "172.17.0.1", family: 4 }]);
+    const url = "https://host.docker.internal:50001/v1/embeddings";
+    await expect(validateEndpointUrl(url)).resolves.toBe(url);
+  });
+
+  it("rejects non-trusted hostname resolving to private IP even if in same network", async () => {
+    mockPrivateDns("172.17.0.1");
+    await expect(validateEndpointUrl("https://attacker.com/ssrf")).rejects.toThrow(
+      /private\/internal address/,
+    );
+  });
 });
