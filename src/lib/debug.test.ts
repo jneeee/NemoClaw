@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // Import from compiled dist/ so coverage is attributed correctly.
 import { redact } from "../../dist/lib/debug";
 
@@ -48,5 +48,36 @@ describe("redact", () => {
   it("leaves clean text unchanged", () => {
     const clean = "Hello world, no secrets here";
     expect(redact(clean)).toBe(clean);
+  });
+});
+
+describe("createTarball error handling", () => {
+  let savedExitCode: number | undefined;
+
+  beforeEach(async () => {
+    savedExitCode = process.exitCode;
+    process.exitCode = undefined;
+    // Suppress console output during tests
+    vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    process.exitCode = savedExitCode;
+    vi.restoreAllMocks();
+  });
+
+  it("sets process.exitCode=1 when tar fails", () => {
+    const { runDebug } = require("../../dist/lib/debug");
+    // Pass an invalid output path that tar cannot write to
+    runDebug({ output: "/nonexistent/path/debug.tar.gz", quick: true });
+
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("does not set exitCode when tar succeeds", () => {
+    const { runDebug } = require("../../dist/lib/debug");
+    runDebug({ output: "/tmp/nemoclaw-test-debug.tar.gz", quick: true });
+
+    expect(process.exitCode).toBeUndefined();
   });
 });

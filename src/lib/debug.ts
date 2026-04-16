@@ -447,10 +447,14 @@ function collectKernelMessages(collectDir: string): void {
 // ---------------------------------------------------------------------------
 
 function createTarball(collectDir: string, output: string): void {
-  spawnSync("tar", ["czf", output, "-C", dirname(collectDir), basename(collectDir)], {
+  const result = spawnSync("tar", ["czf", output, "-C", dirname(collectDir), basename(collectDir)], {
     stdio: "inherit",
     timeout: 60_000,
   });
+  if (result.status !== 0) {
+    const code = result.status ?? "unknown";
+    throw new Error(`tar exited with status ${code}`);
+  }
   info(`Tarball written to ${output}`);
   warn(
     "Known secrets are auto-redacted, but please review for any remaining sensitive data before sharing.",
@@ -500,7 +504,12 @@ export function runDebug(opts: DebugOptions = {}): void {
     collectKernelMessages(collectDir);
 
     if (output) {
-      createTarball(collectDir, output);
+      try {
+        createTarball(collectDir, output);
+      } catch (err) {
+        warn(`Failed to create tarball: ${(err as Error).message}`);
+        process.exitCode = 1;
+      }
     }
 
     console.log("");
