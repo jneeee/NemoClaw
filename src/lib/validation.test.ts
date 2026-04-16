@@ -128,6 +128,21 @@ describe("classifySandboxCreateFailure", () => {
     const result = classifySandboxCreateFailure("something else happened");
     expect(result.kind).toBe("unknown");
   });
+
+  it("detects TLS cert error from 'invalid peer certificate: BadSignature'", () => {
+    const result = classifySandboxCreateFailure("invalid peer certificate: BadSignature");
+    expect(result.kind).toBe("tls_cert_mismatch");
+  });
+
+  it("detects TLS cert error from 'handshake verification failed'", () => {
+    const result = classifySandboxCreateFailure("handshake verification failed");
+    expect(result.kind).toBe("tls_cert_mismatch");
+  });
+
+  it("detects TLS cert error from 'certificate verify failed'", () => {
+    const result = classifySandboxCreateFailure("certificate verify failed");
+    expect(result.kind).toBe("tls_cert_mismatch");
+  });
 });
 
 describe("validateNvidiaApiKeyValue", () => {

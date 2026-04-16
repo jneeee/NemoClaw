@@ -13,7 +13,7 @@ export interface ValidationClassification {
 }
 
 export interface SandboxCreateFailure {
-  kind: "image_transfer_timeout" | "image_transfer_reset" | "sandbox_create_incomplete" | "unknown";
+  kind: "image_transfer_timeout" | "image_transfer_reset" | "sandbox_create_incomplete" | "tls_cert_mismatch" | "unknown";
   uploadedToGateway: boolean;
 }
 
@@ -65,6 +65,9 @@ export function classifySandboxCreateFailure(output = ""): SandboxCreateFailure 
   }
   if (/Created sandbox:/i.test(text)) {
     return { kind: "sandbox_create_incomplete", uploadedToGateway: true };
+  }
+  if (/invalid peer certificate|BadSignature|handshake verification failed|certificate verify failed|tls.*error|ssl.*error/i.test(text)) {
+    return { kind: "tls_cert_mismatch", uploadedToGateway };
   }
   return { kind: "unknown", uploadedToGateway };
 }
