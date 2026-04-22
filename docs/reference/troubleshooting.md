@@ -303,6 +303,9 @@ $ nemoclaw onboard
 After a host reboot, the container runtime, OpenShell gateway, and sandbox may not be running.
 Follow these steps to reconnect.
 
+On macOS Docker setups, `docker pull` plus a container or Docker Desktop restart does not safely upgrade an existing NemoClaw sandbox by itself.
+Use the recovery steps below first.
+
 1. Start the container runtime.
 
    - **Linux:** start Docker if it is not already running (`sudo systemctl start docker`)
@@ -353,6 +356,9 @@ If the sandbox remains missing after restarting the gateway, run `nemoclaw onboa
 The wizard prompts for confirmation before destroying an existing sandbox. If you confirm, it **destroys and recreates** the sandbox. Workspace files (SOUL.md, USER.md, IDENTITY.md, AGENTS.md, MEMORY.md, and daily memory notes) are lost.
 Back up your workspace first by following the instructions at [Back Up and Restore](../workspace/backup-restore.md).
 :::
+
+If `nemoclaw <name> logs` reports that OpenShell is too old or incompatible, upgrade OpenShell by rerunning `nemoclaw onboard`.
+If `openshell gateway start --name nemoclaw` says the named gateway is no longer configured, or the sandbox still appears to be on stale bits after restart, back up your workspace and rerun `nemoclaw onboard` to recreate the affected sandbox.
 
 ### Sandbox is running an outdated agent version
 

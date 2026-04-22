@@ -60,6 +60,10 @@ The sandbox image is approximately 2.4 GB compressed. During image push, the Doc
 For NemoClaw-managed environments, use `nemoclaw onboard` when you need to create or recreate the OpenShell gateway or sandbox.
 Avoid `openshell self-update`, `npm update -g openshell`, `openshell gateway start --recreate`, or `openshell sandbox create` directly unless you intend to manage OpenShell separately and then rerun `nemoclaw onboard`.
 
+On macOS Docker setups, pulling newer images or restarting Docker Desktop alone does not safely upgrade an existing NemoClaw sandbox.
+After a reboot or Docker restart, first retry `openshell gateway start --name nemoclaw`.
+If the sandbox still uses stale OpenClaw or OpenShell bits, or the named gateway is no longer configured, back up your workspace and rerun `nemoclaw onboard` to recreate the sandbox.
+
 #### Container Runtimes
 
 The following table lists tested platform and runtime combinations.
