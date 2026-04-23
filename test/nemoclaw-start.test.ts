@@ -261,8 +261,10 @@ describe("nemoclaw-start configure guard blocks config set/unset (#1973)", () =>
     expect(src).toMatch(/set \| unset\)[\s\S]*?return 1/);
   });
 
-  it("redirects users to nemoclaw onboard --resume", () => {
-    expect(src).toMatch(/set \| unset\)[\s\S]*?nemoclaw onboard --resume/);
+  it("redirects users to the host-side nemoclaw config set command", () => {
+    expect(src).toMatch(/set \| unset\)[\s\S]*?nemoclaw <sandbox> config set --key <dotpath> --value <value>/);
+    expect(src).toMatch(/set \| unset\)[\s\S]*?agents\.defaults\.timeoutSeconds --value 600/);
+    expect(src).not.toMatch(/set \| unset\)[\s\S]*?nemoclaw onboard --resume/);
   });
 
   it("does not block immutable subcommands (get, list) — they fall through to the real binary", () => {

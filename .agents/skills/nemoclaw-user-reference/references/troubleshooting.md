@@ -448,11 +448,14 @@ This is expected.
 The sandbox's OpenClaw configuration (`/sandbox/.openclaw/openclaw.json`) is baked into the container image at build time and mounted read-only at runtime.
 NemoClaw's sandbox entrypoint installs a guard that intercepts `openclaw config set` and `openclaw config unset` and prints an actionable error instead of letting the call fail with a raw permission error.
 
-Rebuild the sandbox from the host to change its OpenClaw configuration:
+For supported config changes, use NemoClaw's host-side config command instead:
 
 ```console
-$ nemoclaw <sandbox> rebuild
+$ nemoclaw <sandbox> config set --key <dotpath> --value <value>
+$ nemoclaw <sandbox> config set --key agents.defaults.timeoutSeconds --value 600
 ```
+
+Some config changes may still require a restart or sandbox recreation to take effect.
 
 ### `openclaw doctor --fix` cannot repair Discord channel config inside the sandbox
 

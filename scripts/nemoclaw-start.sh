@@ -555,10 +555,10 @@ openclaw() {
           echo "Error: 'openclaw config $2' cannot modify config inside the sandbox." >&2
           echo "The sandbox config is read-only (Landlock enforced) for security." >&2
           echo "" >&2
-          echo "To change your configuration, exit the sandbox and run:" >&2
-          echo "  nemoclaw onboard --resume" >&2
+          echo "For supported config changes, exit the sandbox and run the host-side command:" >&2
+          echo "  nemoclaw <sandbox> config set --key <dotpath> --value <value>" >&2
           echo "" >&2
-          echo "This rebuilds the sandbox with your updated settings." >&2
+          echo "Example: nemoclaw <sandbox> config set --key agents.defaults.timeoutSeconds --value 600" >&2
           return 1
           ;;
       esac
