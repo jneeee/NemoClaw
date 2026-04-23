@@ -21,8 +21,12 @@ import importlib.util
 import json
 import pathlib
 import sys
+import types
 
 plugin_path = pathlib.Path(sys.argv[1])
+yaml_stub = types.ModuleType("yaml")
+yaml_stub.safe_load = lambda *_args, **_kwargs: {}
+sys.modules.setdefault("yaml", yaml_stub)
 spec = importlib.util.spec_from_file_location("hermes_plugin", plugin_path)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
