@@ -38,8 +38,10 @@ export interface StreamableReadable {
   destroy?(): void;
 }
 
-export interface StreamableChildProcess
-  extends Pick<ChildProcess, "kill" | "removeAllListeners" | "unref"> {
+export interface StreamableChildProcess extends Pick<
+  ChildProcess,
+  "kill" | "removeAllListeners" | "unref"
+> {
   stdout: StreamableReadable | null;
   stderr: StreamableReadable | null;
   on(event: "error", listener: (error: Error & { code?: string }) => void): this;
@@ -117,12 +119,20 @@ export function streamSandboxCreate(
     if (phaseLine) printProgressLine(phaseLine);
   }
 
+  function isBuildKitProgressLine(line: string) {
+    return /^#\d+\s+\[/.test(line) || /^#\d+\s+(DONE|CACHED)(\s|$)/.test(line);
+  }
+
   function flushLine(rawLine: string) {
     const line = rawLine.replace(/\r/g, "").trimEnd();
     if (!line) return;
     lines.push(line);
     lastOutputAt = Date.now();
-    if (/^ {2}Building image /.test(line) || /^ {2}Step \d+\/\d+ : /.test(line)) {
+    if (
+      /^ {2}Building image /.test(line) ||
+      /^ {2}Step \d+\/\d+ : /.test(line) ||
+      isBuildKitProgressLine(line)
+    ) {
       setPhase("build");
     } else if (
       /^ {2}Pushing image /.test(line) ||
@@ -147,6 +157,7 @@ export function streamSandboxCreate(
       /^ {2}Gateway: /.test(line) ||
       /^Successfully built /.test(line) ||
       /^Successfully tagged /.test(line) ||
+      isBuildKitProgressLine(line) ||
       /^ {2}Built image /.test(line) ||
       /^ {2}Pushing image /.test(line) ||
       /^\s*\[progress\]/.test(line) ||
@@ -251,7 +262,9 @@ export function streamSandboxCreate(
     resolvePromise = resolve;
     child.on("error", (error) => {
       const code = error?.code;
-      const detail = code ? `spawn failed: ${error.message} (${code})` : `spawn failed: ${error.message}`;
+      const detail = code
+        ? `spawn failed: ${error.message} (${code})`
+        : `spawn failed: ${error.message}`;
       lines.push(detail);
       finish(1);
     });
