@@ -331,6 +331,7 @@ OpenClaw Controls <security/openclaw-controls>
 :hidden:
 
 Deploy to a Remote GPU Instance <deployment/deploy-to-remote-gpu>
+Production Deployment Planning <deployment/production-deployment>
 Set Up Telegram <deployment/set-up-telegram-bridge>
 Sandbox Hardening <deployment/sandbox-hardening>
 ```
