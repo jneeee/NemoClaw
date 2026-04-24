@@ -131,9 +131,13 @@ function setDotpath(obj: ConfigObject, dotpath: string, value: ConfigValue): voi
   current[leafKey] = value;
 }
 
+const FIRST_SET_CONFIG_PATHS = new Set(["provider.compatible-endpoint.timeoutSeconds"]);
+
 /**
  * Return true when every segment in a dotpath is an own property on the
- * current config object, which keeps config set constrained to recognized keys.
+ * current config object or when the path is a known schema-supported path that
+ * can be written for the first time. This keeps config set constrained to
+ * recognized keys without blocking valid unset schema paths.
  */
 function isRecognizedConfigPath(obj: unknown, dotpath: string): boolean {
   if (!dotpath || typeof dotpath !== "string") return false;
@@ -142,8 +146,12 @@ function isRecognizedConfigPath(obj: unknown, dotpath: string): boolean {
 
   let current: unknown = obj;
   for (const key of keys) {
-    if (current == null || typeof current !== "object" || Array.isArray(current)) return false;
-    if (!Object.prototype.hasOwnProperty.call(current as Record<string, unknown>, key)) return false;
+    if (current == null || typeof current !== "object" || Array.isArray(current)) {
+      return FIRST_SET_CONFIG_PATHS.has(dotpath);
+    }
+    if (!Object.prototype.hasOwnProperty.call(current as Record<string, unknown>, key)) {
+      return FIRST_SET_CONFIG_PATHS.has(dotpath);
+    }
     current = (current as Record<string, unknown>)[key];
   }
   return true;
@@ -350,7 +358,9 @@ function configSet(sandboxName: string, opts: ConfigSetOpts = {}): void {
   }
 
   if (!isRecognizedConfigPath(config, opts.key)) {
-    console.error(`  Key validation failed: "${opts.key}" is not a recognized ${target.agentName} config path.`);
+    console.error(
+      `  Key validation failed: "${opts.key}" is not a recognized ${target.agentName} config path.`,
+    );
     process.exit(1);
   }
 

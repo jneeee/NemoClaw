@@ -103,7 +103,9 @@ describe("config set helpers", () => {
     });
 
     it("accepts existing keys whose value is null", () => {
-      expect(isRecognizedConfigPath({ provider: { endpoint: null } }, "provider.endpoint")).toBe(true);
+      expect(isRecognizedConfigPath({ provider: { endpoint: null } }, "provider.endpoint")).toBe(
+        true,
+      );
     });
 
     it("rejects an unknown top-level key", () => {
@@ -116,6 +118,18 @@ describe("config set helpers", () => {
           { agents: { defaults: { model: { primary: "gpt-5.4" } } } },
           "agents.defaults.model.secondary",
         ),
+      ).toBe(false);
+    });
+
+    it("accepts known schema-supported paths that are not set yet", () => {
+      expect(
+        isRecognizedConfigPath({ version: 1 }, "provider.compatible-endpoint.timeoutSeconds"),
+      ).toBe(true);
+    });
+
+    it("rejects unknown nested keys that resemble known first-set paths", () => {
+      expect(
+        isRecognizedConfigPath({ version: 1 }, "provider.compatible-endpoint.timeoutSecondz"),
       ).toBe(false);
     });
 
