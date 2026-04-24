@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildProviderArgs,
+  buildInferenceSetArgs,
   buildSandboxConfigSyncScript,
   classifySandboxCreateFailure,
   compactText,
@@ -1632,6 +1633,37 @@ startGateway(null).catch(() => {});
       "https://ignored.example.com",
     );
     expect(args).not.toContain("--config");
+  });
+
+  it("buildInferenceSetArgs includes timeout for compatible endpoints", () => {
+    expect(
+      buildInferenceSetArgs("compatible-endpoint", "qwen3.6:35b", {
+        skipVerify: true,
+        timeoutSecs: 600,
+      }),
+    ).toEqual([
+      "inference",
+      "set",
+      "--no-verify",
+      "--provider",
+      "compatible-endpoint",
+      "--model",
+      "qwen3.6:35b",
+      "--timeout",
+      "600",
+    ]);
+  });
+
+  it("buildInferenceSetArgs omits timeout unless requested", () => {
+    expect(buildInferenceSetArgs("openai-api", "gpt-5.4", { skipVerify: true })).toEqual([
+      "inference",
+      "set",
+      "--no-verify",
+      "--provider",
+      "openai-api",
+      "--model",
+      "gpt-5.4",
+    ]);
   });
 
   it("rejects sandbox names starting with a digit", () => {

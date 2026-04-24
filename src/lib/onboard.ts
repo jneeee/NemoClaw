@@ -20,7 +20,7 @@ function envInt(name, fallback) {
   const n = Number(raw);
   return Number.isFinite(n) ? Math.max(0, Math.round(n)) : fallback;
 }
-/** Inference timeout (seconds) for local providers (Ollama, vLLM, NIM). */
+/** Inference timeout (seconds) for local providers and compatible external endpoints. */
 const LOCAL_INFERENCE_TIMEOUT_SECS = envInt("NEMOCLAW_LOCAL_INFERENCE_TIMEOUT", 180);
 
 /** Strip ANSI escape sequences before printing process output to the terminal.
@@ -820,6 +820,18 @@ function buildProviderArgs(action, name, type, credentialEnv, baseUrl) {
     args.push("--config", `OPENAI_BASE_URL=${baseUrl}`);
   } else if (baseUrl && type === "anthropic") {
     args.push("--config", `ANTHROPIC_BASE_URL=${baseUrl}`);
+  }
+  return args;
+}
+
+function buildInferenceSetArgs(provider, model, { skipVerify = false, timeoutSecs = null } = {}) {
+  const args = ["inference", "set"];
+  if (skipVerify) {
+    args.push("--no-verify");
+  }
+  args.push("--provider", provider, "--model", model);
+  if (timeoutSecs !== null && timeoutSecs !== undefined) {
+    args.push("--timeout", String(timeoutSecs));
   }
   return args;
 }
@@ -4850,11 +4862,10 @@ async function setupInference(
         }
         process.exit(providerResult.status || 1);
       }
-      const args = ["inference", "set"];
-      if (config.skipVerify) {
-        args.push("--no-verify");
-      }
-      args.push("--provider", provider, "--model", model);
+      const args = buildInferenceSetArgs(provider, model, {
+        skipVerify: Boolean(config.skipVerify),
+        timeoutSecs: provider === "compatible-endpoint" ? LOCAL_INFERENCE_TIMEOUT_SECS : null,
+      });
       const applyResult = runOpenshell(args, { ignoreError: true });
       if (applyResult.status === 0) {
         break;
@@ -4894,17 +4905,12 @@ async function setupInference(
       console.error(`  ${providerResult.message}`);
       process.exit(providerResult.status || 1);
     }
-    runOpenshell([
-      "inference",
-      "set",
-      "--no-verify",
-      "--provider",
-      "vllm-local",
-      "--model",
-      model,
-      "--timeout",
-      String(LOCAL_INFERENCE_TIMEOUT_SECS),
-    ]);
+    runOpenshell(
+      buildInferenceSetArgs("vllm-local", model, {
+        skipVerify: true,
+        timeoutSecs: LOCAL_INFERENCE_TIMEOUT_SECS,
+      }),
+    );
   } else if (provider === "ollama-local") {
     const validation = validateLocalProvider(provider);
     if (!validation.ok) {
@@ -4939,17 +4945,12 @@ async function setupInference(
       console.error(`  ${providerResult.message}`);
       process.exit(providerResult.status || 1);
     }
-    runOpenshell([
-      "inference",
-      "set",
-      "--no-verify",
-      "--provider",
-      "ollama-local",
-      "--model",
-      model,
-      "--timeout",
-      String(LOCAL_INFERENCE_TIMEOUT_SECS),
-    ]);
+    runOpenshell(
+      buildInferenceSetArgs("ollama-local", model, {
+        skipVerify: true,
+        timeoutSecs: LOCAL_INFERENCE_TIMEOUT_SECS,
+      }),
+    );
     console.log(`  Priming Ollama model: ${model}`);
     run(getOllamaWarmupCommand(model), { ignoreError: true });
     const probe = validateOllamaModel(model);
@@ -6329,7 +6330,7 @@ function printDashboard(sandboxName, model, provider, nimContainer = null, agent
   console.log(`  ${"─".repeat(50)}`);
   console.log("");
   console.log("  To change settings later:");
-  console.log(`    Model:       openshell inference set -g nemoclaw --model <model> --provider <provider>`);
+  console.log(`    Model:       openshell inference set -g nemoclaw -m <model> -p <provider>`);
   console.log(`    Policies:    nemoclaw ${sandboxName} policy-add`);
   console.log("    Credentials: nemoclaw credentials reset <KEY>  then  nemoclaw onboard");
   console.log("");
@@ -6850,6 +6851,7 @@ async function onboard(opts = {}) {
 
 module.exports = {
   buildProviderArgs,
+  buildInferenceSetArgs,
   buildGatewayBootstrapSecretsScript,
   buildSandboxConfigSyncScript,
   compactText,
