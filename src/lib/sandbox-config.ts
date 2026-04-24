@@ -131,14 +131,24 @@ function setDotpath(obj: ConfigObject, dotpath: string, value: ConfigValue): voi
   current[leafKey] = value;
 }
 
+const SCHEMA_RECOGNIZED_CONFIG_PATHS = new Set([
+  // OpenClaw provider override used for OpenAI-compatible endpoints. This path
+  // is schema-valid even before a freshly generated openclaw.json contains a
+  // provider section, so config set must allow first-time writes for it.
+  "provider.compatible-endpoint.timeoutSeconds",
+]);
+
 /**
- * Return true when every segment in a dotpath is an own property on the
- * current config object, which keeps config set constrained to recognized keys.
+ * Return true when a dotpath is already present in the current config object or
+ * is a known schema-recognized optional path. This keeps config set constrained
+ * to recognized keys without rejecting valid first-time writes for unset keys.
  */
 function isRecognizedConfigPath(obj: unknown, dotpath: string): boolean {
   if (!dotpath || typeof dotpath !== "string") return false;
   const keys = dotpath.split(".");
   if (keys.some((key) => !key)) return false;
+
+  if (SCHEMA_RECOGNIZED_CONFIG_PATHS.has(dotpath)) return true;
 
   let current: unknown = obj;
   for (const key of keys) {

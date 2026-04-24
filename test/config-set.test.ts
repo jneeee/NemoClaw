@@ -106,6 +106,14 @@ describe("config set helpers", () => {
       expect(isRecognizedConfigPath({ provider: { endpoint: null } }, "provider.endpoint")).toBe(true);
     });
 
+    it("accepts schema-recognized optional paths before they are set", () => {
+      expect(isRecognizedConfigPath({}, "provider.compatible-endpoint.timeoutSeconds")).toBe(true);
+    });
+
+    it("rejects misspelled schema-like optional paths", () => {
+      expect(isRecognizedConfigPath({}, "provider.compatible-endpoint.timeoutSecond")).toBe(false);
+    });
+
     it("rejects an unknown top-level key", () => {
       expect(isRecognizedConfigPath({ version: 1 }, "inference.endpoint")).toBe(false);
     });
