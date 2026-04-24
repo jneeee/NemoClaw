@@ -153,6 +153,86 @@ describe("sandbox-create-stream", () => {
     expect((await promise).forcedReady).toBeUndefined();
   });
 
+  it("recognizes BuildKit step-header lines and triggers build phase", async () => {
+    const child = new FakeChild();
+    const logLine = vi.fn();
+    const promise = streamSandboxCreate("echo create", process.env, {
+      logLine,
+      spawnImpl: () => child as never,
+      heartbeatIntervalMs: 1_000,
+      silentPhaseMs: 10_000,
+    });
+
+    child.stdout.emit(
+      "data",
+      Buffer.from(
+        "#1 [internal] load build definition from Dockerfile\n" +
+          "#2 [1/3] FROM ghcr.io/example/base\n",
+      ),
+    );
+    child.emit("close", 0);
+
+    const result = await promise;
+    expect(result.sawProgress).toBe(true);
+    expect(logLine).toHaveBeenCalledWith("#1 [internal] load build definition from Dockerfile");
+    expect(logLine).toHaveBeenCalledWith("#2 [1/3] FROM ghcr.io/example/base");
+  });
+
+  it("shows BuildKit DONE and CACHED lines as progress", async () => {
+    const child = new FakeChild();
+    const logLine = vi.fn();
+    const promise = streamSandboxCreate("echo create", process.env, {
+      logLine,
+      spawnImpl: () => child as never,
+      heartbeatIntervalMs: 1_000,
+      silentPhaseMs: 10_000,
+    });
+
+    child.stdout.emit(
+      "data",
+      Buffer.from("#7 DONE 0.2s\n#8 CACHED\n"),
+    );
+    child.emit("close", 0);
+
+    const result = await promise;
+    expect(result.sawProgress).toBe(true);
+    expect(logLine).toHaveBeenCalledWith("#7 DONE 0.2s");
+    expect(logLine).toHaveBeenCalledWith("#8 CACHED");
+  });
+
+  it("handles mixed BuildKit and legacy builder output without confusing phases", async () => {
+    const child = new FakeChild();
+    const logLine = vi.fn();
+    const promise = streamSandboxCreate("echo create", process.env, {
+      logLine,
+      spawnImpl: () => child as never,
+      heartbeatIntervalMs: 1_000,
+      silentPhaseMs: 10_000,
+    });
+
+    child.stdout.emit(
+      "data",
+      Buffer.from(
+        "#1 [internal] load build definition from Dockerfile\n" +
+          "#2 [2/3] RUN apt-get update\n" +
+          "#3 DONE 1.4s\n" +
+          "#4 CACHED\n" +
+          "  Pushing image sandbox:latest\n" +
+          "Created sandbox: mixed\n",
+      ),
+    );
+    child.emit("close", 0);
+
+    const result = await promise;
+    expect(result.sawProgress).toBe(true);
+    expect(result.output).toContain("Created sandbox: mixed");
+    expect(logLine).toHaveBeenCalledWith("#1 [internal] load build definition from Dockerfile");
+    expect(logLine).toHaveBeenCalledWith("#3 DONE 1.4s");
+    expect(logLine).toHaveBeenCalledWith("#4 CACHED");
+    expect(logLine).toHaveBeenCalledWith("  Pushing image sandbox:latest");
+    expect(logLine).toHaveBeenCalledWith("Created sandbox: mixed");
+  });
+
   it("reports spawn errors cleanly", async () => {
     const child = new FakeChild();
     const promise = streamSandboxCreate("echo create", process.env, {

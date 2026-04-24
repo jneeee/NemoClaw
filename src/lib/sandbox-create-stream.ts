@@ -122,7 +122,11 @@ export function streamSandboxCreate(
     if (!line) return;
     lines.push(line);
     lastOutputAt = Date.now();
-    if (/^ {2}Building image /.test(line) || /^ {2}Step \d+\/\d+ : /.test(line)) {
+    if (
+      /^ {2}Building image /.test(line) ||
+      /^ {2}Step \d+\/\d+ : /.test(line) ||
+      /^#\d+ \[/.test(line)
+    ) {
       setPhase("build");
     } else if (
       /^ {2}Pushing image /.test(line) ||
@@ -152,7 +156,10 @@ export function streamSandboxCreate(
       /^\s*\[progress\]/.test(line) ||
       /^ {2}Image .*available in the gateway/.test(line) ||
       /^Created sandbox: /.test(line) ||
-      /^✓ /.test(line)
+      /^✓ /.test(line) ||
+      /^#\d+ \[/.test(line) ||
+      /^#\d+ DONE /.test(line) ||
+      /^#\d+ CACHED$/.test(line)
     );
   }
 
