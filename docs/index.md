@@ -333,6 +333,7 @@ OpenClaw Controls <security/openclaw-controls>
 Deploy to a Remote GPU Instance <deployment/deploy-to-remote-gpu>
 Set Up Telegram <deployment/set-up-telegram-bridge>
 Sandbox Hardening <deployment/sandbox-hardening>
+Production Considerations <deployment/production-considerations>
 ```
 
 ```{toctree}

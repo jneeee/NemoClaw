@@ -149,6 +149,7 @@ $ nemoclaw deploy <instance-name>
 
 ## Related Topics
 
+- [Production Considerations](production-considerations.md) for port reference, proxy setup, air-gap guidance, and multi-host topology.
 - [Set Up Telegram](set-up-telegram-bridge.md) to connect Telegram through OpenShell-managed channel messaging.
 - [Monitor Sandbox Activity](../monitoring/monitor-sandbox-activity.md) for sandbox monitoring tools.
 - [Commands](../reference/commands.md) for the full `deploy` command reference.
