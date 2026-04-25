@@ -109,7 +109,18 @@ Start your model server.
 The examples below use vLLM, but any OpenAI-compatible server works.
 
 ```console
-$ vllm serve meta-llama/Llama-3.1-8B-Instruct --port 8000
+$ vllm serve meta-llama/Llama-3.1-8B-Instruct --host 0.0.0.0 --port 8000
+```
+
+For a local GGUF model served by llama.cpp, start `llama-server` on a host and port that the sandbox can reach.
+For example:
+
+```console
+$ llama-server \
+  -m /models/NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --chat-template chatml
 ```
 
 Run the onboard wizard.
@@ -119,7 +130,9 @@ $ nemoclaw onboard
 ```
 
 When the wizard asks you to choose an inference provider, select **Other OpenAI-compatible endpoint**.
-Enter the base URL of your local server, for example `http://localhost:8000/v1`.
+If the server runs on the host, use the Docker host-gateway alias instead of a raw host IP or `localhost` from the sandbox perspective.
+For example, enter `http://host.openshell.internal:8000/v1` for a server listening on host port `8000`.
+The `local-inference` policy preset already includes port `8000`; for a non-standard port, add a custom policy that allows the endpoint before expecting the sandbox to reach it.
 
 The wizard prompts for an API key.
 If your server does not require authentication, enter any non-empty string (for example, `dummy`).
@@ -134,7 +147,7 @@ Set the following environment variables for scripted or CI/CD deployments.
 
 ```console
 $ NEMOCLAW_PROVIDER=custom \
-  NEMOCLAW_ENDPOINT_URL=http://localhost:8000/v1 \
+  NEMOCLAW_ENDPOINT_URL=http://host.openshell.internal:8000/v1 \
   NEMOCLAW_MODEL=meta-llama/Llama-3.1-8B-Instruct \
   COMPATIBLE_API_KEY=dummy \
   nemoclaw onboard --non-interactive
@@ -143,7 +156,7 @@ $ NEMOCLAW_PROVIDER=custom \
 | Variable | Purpose |
 |---|---|
 | `NEMOCLAW_PROVIDER` | Set to `custom` for an OpenAI-compatible endpoint. |
-| `NEMOCLAW_ENDPOINT_URL` | Base URL of the local server. |
+| `NEMOCLAW_ENDPOINT_URL` | Base URL of the local server. Use `http://host.openshell.internal:<port>/v1` when the server runs on the host. |
 | `NEMOCLAW_MODEL` | Model ID as reported by the server. |
 | `COMPATIBLE_API_KEY` | API key for the endpoint. Use any non-empty value if authentication is not required. |
 
