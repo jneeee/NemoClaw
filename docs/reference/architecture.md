@@ -232,6 +232,23 @@ container image. Inside the sandbox:
 - Network egress is restricted by the baseline policy in `openclaw-sandbox.yaml`.
 - Filesystem access is confined to `/sandbox` and `/tmp` for read-write access, with system paths read-only.
 
+### Sandbox Resource Model
+
+In Kubernetes-backed OpenShell deployments, a sandbox is represented by a `Sandbox` custom resource from the `sandboxes.agents.x-k8s.io` CRD. The sandbox pod is owned by the matching `Sandbox` resource, so `kubectl describe pod` shows a controller reference such as `Controlled By: Sandbox/<sandbox-name>`.
+
+The `agent-sandbox-controller` runs in the `agent-sandbox-system` namespace and reconciles those `Sandbox` resources into running pods in the OpenShell namespace. NemoClaw normally abstracts these Kubernetes details behind the OpenShell and NemoClaw CLIs, but the ownership chain is useful when inspecting cluster state or debugging why a sandbox pod was created.
+
+```{mermaid}
+flowchart LR
+    NC[NemoClaw CLI] --> OS[OpenShell]
+    OS --> SB["Sandbox custom resource<br/>sandboxes.agents.x-k8s.io"]
+    CTRL["agent-sandbox-controller<br/>agent-sandbox-system"] -->|reconciles| SB
+    SB -->|owns| POD["sandbox pod<br/>openshell namespace"]
+    POD --> AGENT[OpenClaw agent]
+```
+
+You can inspect the relationship with Kubernetes commands such as `kubectl get sandboxes.agents.x-k8s.io -A`, `kubectl get pods -n openshell`, and `kubectl describe pod -n openshell <sandbox-pod>`.
+
 ## Inference Routing
 
 Inference requests from the agent never leave the sandbox directly.
