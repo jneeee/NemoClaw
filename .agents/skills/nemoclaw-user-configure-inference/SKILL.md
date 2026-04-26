@@ -232,6 +232,10 @@ $ nemoclaw onboard
 Select **Local Ollama** from the provider list.
 NemoClaw lists installed models or offers starter models if none are installed.
 It pulls the selected model, loads it into memory, and validates it before continuing.
+The Ollama path accepts Ollama model tags such as `qwen2.5:7b`; it does not accept
+an arbitrary `.gguf` file path. To use a downloaded GGUF model directly, run it
+with llama.cpp `llama-server` or another OpenAI-compatible server and use the
+**Other OpenAI-compatible endpoint** option instead.
 
 ### Linux with Docker
 
@@ -269,11 +273,30 @@ If the server also supports `/v1/responses`, NemoClaw only favors that path when
 Otherwise NemoClaw falls back to `/v1/chat/completions`.
 
 Start your model server.
-The examples below use vLLM, but any OpenAI-compatible server works.
+The examples below use vLLM and llama.cpp, but any OpenAI-compatible server works.
 
 ```console
 $ vllm serve meta-llama/Llama-3.1-8B-Instruct --port 8000
 ```
+
+For a local GGUF file, start `llama-server` with the downloaded model and expose
+its OpenAI-compatible API on a port NemoClaw can reach:
+
+```console
+$ llama-server \
+  -m /models/NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf \
+  -c 1024 \
+  -ngl 999 \
+  --parallel 1 \
+  --port 8000 \
+  --host 0.0.0.0 \
+  --metrics \
+  --chat-template chatml
+```
+
+> **Warning:** Binding a local inference server to `0.0.0.0` can expose it to other machines on
+> your network, often without authentication. Use a trusted network, firewall rules,
+> or a loopback-only bind plus host networking/proxying when possible.
 
 Run the onboard wizard.
 
@@ -283,6 +306,9 @@ $ nemoclaw onboard
 
 When the wizard asks you to choose an inference provider, select **Other OpenAI-compatible endpoint**.
 Enter the base URL of your local server, for example `http://localhost:8000/v1`.
+For Linux Docker-based setups, use a host name or proxy address that is reachable
+from the OpenShell sandbox, such as `http://host.openshell.internal:8000/v1`,
+when plain `localhost` only refers to the host shell.
 
 The wizard prompts for an API key.
 If your server does not require authentication, enter any non-empty string (for example, `dummy`).
