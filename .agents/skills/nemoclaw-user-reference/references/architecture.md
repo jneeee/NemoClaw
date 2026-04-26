@@ -212,6 +212,28 @@ container image. Inside the sandbox:
 - Network egress is restricted by the baseline policy in `openclaw-sandbox.yaml`.
 - Filesystem access is confined to `/sandbox` and `/tmp` for read-write access, with system paths read-only.
 
+### Kubernetes Sandbox Objects
+
+OpenShell starts a local Kubernetes control plane for NemoClaw-managed sandboxes.
+When the blueprint applies the sandbox plan, the OpenShell gateway creates a
+`sandboxes.agents.x-k8s.io` custom resource. The agent-sandbox controller watches
+that custom resource and reconciles it into the sandbox pod that runs OpenClaw and
+the NemoClaw plugin.
+
+```mermaid
+flowchart LR
+    CLI["nemoclaw onboard"] --> BP["NemoClaw blueprint"]
+    BP --> GW["OpenShell gateway"]
+    GW --> CR["Sandbox CRD<br/>sandboxes.agents.x-k8s.io"]
+    CR --> CTRL["agent-sandbox controller"]
+    CTRL --> POD["Sandbox pod<br/>OpenClaw + NemoClaw plugin"]
+```
+
+This means `kubectl get pods -A` can show both the OpenShell control-plane pods
+and one or more sandbox pods. The sandbox pod is normally an implementation
+detail; manage it through `nemoclaw onboard`, `nemoclaw status`, and
+OpenShell/NemoClaw commands rather than editing Kubernetes objects directly.
+
 ## Inference Routing
 
 Inference requests from the agent never leave the sandbox directly.
