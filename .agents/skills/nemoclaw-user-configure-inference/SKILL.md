@@ -8,6 +8,10 @@ description: "Lists all inference providers offered during NemoClaw onboarding. 
 
 # NemoClaw Inference Options
 
+## Gotchas
+
+- Binding a local inference server to `0.0.0.0` can expose it to other machines on your network, often without authentication.
+
 ## Prerequisites
 
 - A running NemoClaw sandbox.
