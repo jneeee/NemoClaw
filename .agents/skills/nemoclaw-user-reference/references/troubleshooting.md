@@ -572,7 +572,11 @@ This is expected.
 The sandbox's OpenClaw configuration (`/sandbox/.openclaw/openclaw.json`) is baked into the container image at build time and mounted read-only at runtime.
 NemoClaw's sandbox entrypoint installs a guard that intercepts `openclaw config set` and `openclaw config unset` and prints an actionable error instead of letting the call fail with a raw permission error.
 
-Rebuild the sandbox from the host to change its OpenClaw configuration:
+This also applies to plugin configuration stored under `plugins.entries.<id>.config` in `openclaw.json`.
+Plugin code can be installed into writable OpenClaw data paths, but the plugin configuration embedded in the baked config is build-time only in NemoClaw-managed sandboxes.
+If a manual edit to `/sandbox/.openclaw/openclaw.json` fails with `EACCES` or `Operation not permitted`, that is the runtime Landlock and read-only filesystem policy working as intended.
+
+Rebuild the sandbox from the host to change its OpenClaw or plugin configuration:
 
 ```console
 $ nemoclaw <sandbox> rebuild
