@@ -134,6 +134,31 @@ NemoClaw never gives the sandbox a raw provider key.
 At onboard time it registers credentials with OpenShell's provider/placeholder system, and the L7 proxy substitutes the real value into outbound requests at egress.
 The CLI helper `isInferenceRouteReady` (in `src/lib/onboard.ts`) is a host-side readiness check used by the resume flow to decide whether the active route already covers the chosen provider and model — it is not a runtime component.
 
+### Kubernetes sandbox ownership
+
+Inside the OpenShell gateway container, the embedded k3s cluster represents each NemoClaw sandbox as a `Sandbox` custom resource from the `sandboxes.agents.x-k8s.io` CRD.
+The `agent-sandbox-controller` runs in the `agent-sandbox-system` namespace, reconciles those `Sandbox` resources, and owns the sandbox pods that run in the `openshell` namespace.
+That means `kubectl describe pod -n openshell <sandbox-pod>` shows an owner reference such as `Controlled By: Sandbox/<sandbox-name>`.
+
+```mermaid
+graph LR
+    CLI["nemoclaw / openshell CLI"] --> OS["OpenShell gateway container"]
+    OS --> K3S["embedded k3s"]
+    K3S --> CR["Sandbox custom resource<br/>sandboxes.agents.x-k8s.io"]
+    CTRL["agent-sandbox-controller<br/>agent-sandbox-system"] --> CR
+    CR --> POD["sandbox pod<br/>openshell namespace"]
+```
+
+To inspect this relationship from inside the gateway container, use Kubernetes commands such as:
+
+```console
+$ kubectl get sandboxes.agents.x-k8s.io -A
+$ kubectl get pods -n openshell
+$ kubectl describe pod -n openshell <sandbox-pod>
+```
+
+NemoClaw normally abstracts these Kubernetes details behind the OpenShell and NemoClaw CLIs, but the ownership chain is useful when debugging why a sandbox pod exists or which controller created it.
+
 For the DGX Spark-specific variant of this topology (cgroup v2, aarch64, unified memory), refer to the [NVIDIA Spark playbook](https://build.nvidia.com/spark/nemoclaw).
 
 ## NemoClaw Plugin
