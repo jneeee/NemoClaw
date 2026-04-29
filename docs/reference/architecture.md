@@ -147,8 +147,11 @@ Layering from top to bottom:
 | Docker daemon | Host service | Runs the OpenShell gateway container. |
 | Gateway container | Docker container | Hosts the credential store, the L7 proxy, and the embedded k3s control plane. |
 | k3s | Process tree inside the gateway container | Kubernetes control plane that schedules the sandbox pod. |
+| Sandbox custom resource | `Sandbox` object from the `sandboxes.agents.x-k8s.io` CRD | Desired state that the agent-sandbox controller reconciles into the sandbox pod. |
 | Sandbox pod | Pod in the embedded k3s cluster | Runs the OpenClaw agent and the NemoClaw plugin under Landlock + seccomp + netns. |
 | OpenShell L7 proxy | Process in the gateway container | Intercepts agent egress and rewrites `Authorization` headers (Bearer/Bot) and URL-path segments to inject the real credential at the network boundary. |
+
+Inside the gateway container, the embedded cluster includes the `sandboxes.agents.x-k8s.io` custom resource definition and an `agent-sandbox-controller` workload in the `agent-sandbox-system` namespace. Each NemoClaw sandbox is represented by a `Sandbox` custom resource, usually in the `openshell` namespace. The controller reconciles that object into the sandbox pod; `kubectl describe pod` reports `Controlled By: Sandbox/<name>` for the pod that runs the agent.
 
 NemoClaw never gives the sandbox a raw provider key.
 At onboard time it registers credentials with OpenShell's provider/placeholder system, and the L7 proxy substitutes the real value into outbound requests at egress.
