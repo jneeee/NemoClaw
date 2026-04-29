@@ -72,11 +72,11 @@ export function classifySandboxCreateFailure(output = ""): SandboxCreateFailure 
   if (/Connection reset by peer/i.test(text)) {
     return { kind: "image_transfer_reset", uploadedToGateway };
   }
-  if (/Created sandbox:/i.test(text)) {
-    return { kind: "sandbox_create_incomplete", uploadedToGateway: true };
-  }
   if (/invalid peer certificate|BadSignature|handshake verification failed|certificate verify failed|SSL certificate problem|x509: certificate|unknown authority/i.test(text)) {
     return { kind: "tls_cert_mismatch", uploadedToGateway };
+  }
+  if (/Created sandbox:/i.test(text)) {
+    return { kind: "sandbox_create_incomplete", uploadedToGateway: true };
   }
   return { kind: "unknown", uploadedToGateway };
 }

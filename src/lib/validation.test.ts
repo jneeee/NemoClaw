@@ -219,6 +219,12 @@ describe("classifySandboxCreateFailure", () => {
     expect(classifySandboxCreateFailure("TLS error later during notify").kind).toBe("unknown");
     expect(classifySandboxCreateFailure("ssl error: peer closed connection").kind).toBe("unknown");
   });
+
+  it("classifies tls_cert_mismatch even when 'Created sandbox:' is also present", () => {
+    const output = "Created sandbox: test-sandbox\nError: handshake verification failed";
+    const result = classifySandboxCreateFailure(output);
+    expect(result.kind).toBe("tls_cert_mismatch");
+  });
 });
 
 describe("validateNvidiaApiKeyValue", () => {
