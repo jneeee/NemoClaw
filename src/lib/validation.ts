@@ -66,7 +66,7 @@ export function classifySandboxCreateFailure(output = ""): SandboxCreateFailure 
   if (/Created sandbox:/i.test(text)) {
     return { kind: "sandbox_create_incomplete", uploadedToGateway: true };
   }
-  if (/invalid peer certificate|BadSignature|handshake verification failed|certificate verify failed|tls.*error|ssl.*error/i.test(text)) {
+  if (/invalid peer certificate|BadSignature|handshake verification failed|certificate verify failed|SSL certificate problem|x509: certificate|unknown authority/i.test(text)) {
     return { kind: "tls_cert_mismatch", uploadedToGateway };
   }
   return { kind: "unknown", uploadedToGateway };
