@@ -147,8 +147,45 @@ Layering from top to bottom:
 | Docker daemon | Host service | Runs the OpenShell gateway container. |
 | Gateway container | Docker container | Hosts the credential store, the L7 proxy, and the embedded k3s control plane. |
 | k3s | Process tree inside the gateway container | Kubernetes control plane that schedules the sandbox pod. |
+| Sandbox controller | StatefulSet in the `agent-sandbox-system` namespace | Reconciles `Sandbox` custom resources into sandbox pods. |
+| Sandbox custom resource | `sandboxes.agents.x-k8s.io` object in the `openshell` namespace | Declarative Kubernetes object that represents one OpenShell sandbox. |
 | Sandbox pod | Pod in the embedded k3s cluster | Runs the OpenClaw agent and the NemoClaw plugin under Landlock + seccomp + netns. |
 | OpenShell L7 proxy | Process in the gateway container | Intercepts agent egress and rewrites `Authorization` headers (Bearer/Bot) and URL-path segments to inject the real credential at the network boundary. |
+
+### Kubernetes Sandbox Resources
+
+The sandbox is not a standalone Docker container next to the OpenShell gateway.
+OpenShell runs an embedded k3s cluster inside the gateway container, and each sandbox is represented by a `Sandbox` custom resource in that cluster.
+The `agent-sandbox-controller` watches `sandboxes.agents.x-k8s.io` objects and creates the corresponding sandbox pod in the `openshell` namespace.
+
+```{mermaid}
+flowchart TB
+    GW[OpenShell gateway container]
+    K3S[Embedded k3s cluster]
+    CTRL[agent-sandbox-controller StatefulSet\nagent-sandbox-system namespace]
+    CR[Sandbox custom resource\nsandboxes.agents.x-k8s.io\nopenshell namespace]
+    POD[Sandbox pod\nopenshell namespace]
+
+    GW --> K3S
+    K3S --> CTRL
+    K3S --> CR
+    CTRL -->|reconciles| CR
+    CR -->|controls| POD
+```
+
+Use these commands from inside the OpenShell gateway container when you need to inspect the Kubernetes layer:
+
+```console
+kubectl get crd sandboxes.agents.x-k8s.io
+kubectl get sandboxes.agents.x-k8s.io -A
+kubectl get pods -n openshell
+kubectl describe pod -n openshell <sandbox-pod-name>
+kubectl get pods,statefulset -n agent-sandbox-system
+```
+
+A healthy sandbox normally shows a `Sandbox/<name>` owner reference on the pod.
+That owner reference means the pod was created from the OpenShell `Sandbox` custom resource, so direct pod edits are temporary and can be overwritten by the controller.
+For normal operations, use `nemoclaw` or `openshell sandbox` commands instead of editing Kubernetes resources by hand.
 
 NemoClaw never gives the sandbox a raw provider key.
 At onboard time it registers credentials with OpenShell's provider/placeholder system, and the L7 proxy substitutes the real value into outbound requests at egress.
