@@ -398,6 +398,61 @@ describe("runner", () => {
       );
     });
 
+    it("applies blueprint policy additions after sandbox creation", async () => {
+      mockExeca.mockImplementation((cmd: string, args: string[]) => {
+        if (cmd === "openshell" && args.join(" ") === "policy get --full test-sandbox") {
+          return Promise.resolve({
+            exitCode: 0,
+            stdout:
+              "Version: 1\n---\nversion: 1\nnetwork_policies:\n  existing:\n    name: existing\n    endpoints: []\n",
+            stderr: "",
+          });
+        }
+        return Promise.resolve({ exitCode: 0, stdout: "", stderr: "" });
+      });
+
+      await actionApply(
+        "default",
+        minimalBlueprint({
+          components: {
+            inference: {
+              profiles: {
+                default: {
+                  provider_type: "openai",
+                  provider_name: "my-provider",
+                  endpoint: "https://api.example.com/v1",
+                  model: "gpt-4",
+                },
+              },
+            },
+            sandbox: { name: "test-sandbox" },
+            policy: {
+              additions: {
+                nim_service: {
+                  name: "nim_service",
+                  endpoints: [{ host: "nim-service.local", port: 8000, access: "full" }],
+                },
+              },
+            },
+          },
+        }),
+      );
+
+      const policySetCall = mockExeca.mock.calls.find(
+        (c) => Array.isArray(c[1]) && c[1].join(" ").startsWith("policy set --policy"),
+      );
+      if (!policySetCall) throw new Error("policy set call not found");
+      expect(policySetCall[1]).toContain("--wait");
+      expect(policySetCall[1]).toContain("test-sandbox");
+
+      const policyFile = [...store.values()]
+        .map((entry) => entry.content ?? "")
+        .find((content) => content.includes("nim_service"));
+      expect(policyFile).toContain("existing:");
+      expect(policyFile).toContain("nim-service.local");
+      expect(stdoutText()).toContain("PROGRESS:45:Applying blueprint policy additions");
+    });
+
     it("reuses sandbox when 'already exists' error", async () => {
       mockExeca.mockResolvedValueOnce({ exitCode: 1, stdout: "", stderr: "already exists" });
       // Subsequent calls succeed

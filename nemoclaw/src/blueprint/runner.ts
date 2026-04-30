@@ -175,6 +175,54 @@ function readRollbackSandboxName(value: RollbackPlanSource | null): string {
   return value && typeof value.sandbox_name === "string" ? value.sandbox_name : "openclaw";
 }
 
+function parsePolicyYaml(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const sep = raw.indexOf("---");
+  const candidate = (sep === -1 ? raw : raw.slice(sep + 3)).trim();
+  if (!candidate) return "";
+  try {
+    const parsed: unknown = YAML.parse(candidate);
+    return isObjectLike(parsed) ? candidate : "";
+  } catch {
+    return "";
+  }
+}
+
+function mergePolicyAdditions(currentPolicy: string, additions: PolicyAdditions): string {
+  const policyYaml = parsePolicyYaml(currentPolicy);
+  const parsedCurrent: unknown = policyYaml ? YAML.parse(policyYaml) : {};
+  const current = isObjectLike(parsedCurrent) ? parsedCurrent : {};
+  const existingPolicies = current.network_policies;
+  const networkPolicies = isObjectLike(existingPolicies) ? existingPolicies : {};
+  return YAML.stringify({
+    ...current,
+    version: typeof current.version === "number" ? current.version : 1,
+    network_policies: {
+      ...networkPolicies,
+      ...additions,
+    },
+  });
+}
+
+async function applyPolicyAdditions(
+  sandboxName: string,
+  additions: PolicyAdditions,
+  stateDir: string,
+): Promise<void> {
+  if (Object.keys(additions).length === 0) return;
+
+  progress(45, "Applying blueprint policy additions");
+  const currentResult = await runCmd(["openshell", "policy", "get", "--full", sandboxName], {
+    reject: false,
+  });
+  const merged = mergePolicyAdditions(currentResult.stdout, additions);
+  const policyPath = join(stateDir, "policy-additions.yaml");
+  writeFileSync(policyPath, merged);
+  await runCmd(["openshell", "policy", "set", "--policy", policyPath, "--wait", sandboxName], {
+    reject: false,
+  });
+}
+
 // ── Utilities ───────────────────────────────────────────────────
 
 export function emitRunId(): string {
@@ -388,6 +436,8 @@ export async function actionApply(
   const sandboxName = sandboxCfg.name ?? "openclaw";
   const sandboxImage = sandboxCfg.image ?? "openclaw";
   const forwardPorts = sandboxCfg.forward_ports ?? [DASHBOARD_PORT];
+  const stateDir = join(homedir(), ".nemoclaw", "state", "runs", rid);
+  mkdirSync(stateDir, { recursive: true });
 
   progress(20, "Creating OpenClaw sandbox");
   const createArgs = [
@@ -411,6 +461,8 @@ export async function actionApply(
       throw new Error(`Failed to create sandbox: ${createResult.stderr}`);
     }
   }
+
+  await applyPolicyAdditions(sandboxName, blueprint.components?.policy?.additions ?? {}, stateDir);
 
   progress(50, "Configuring inference provider");
   const providerName = inferenceCfg.provider_name ?? "default";
@@ -468,8 +520,6 @@ export async function actionApply(
   await runCmd(inferenceArgs, { reject: false });
 
   progress(85, "Saving run state");
-  const stateDir = join(homedir(), ".nemoclaw", "state", "runs", rid);
-  mkdirSync(stateDir, { recursive: true });
   writeFileSync(
     join(stateDir, "plan.json"),
     JSON.stringify(
