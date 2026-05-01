@@ -304,5 +304,6 @@ If the provider itself needs to change (for example, switching from vLLM to a cl
 ## Next Steps
 
 - [Inference Options](inference-options.md) for the full list of providers available during onboarding.
+- [Tool-Calling Reliability](tool-calling-reliability.md) for choosing Ollama or vLLM when agents depend on tools.
 - [Switch Inference Models](switch-inference-providers.md) for runtime model switching.
 - [Quickstart](../get-started/quickstart.md) for first-time installation.
