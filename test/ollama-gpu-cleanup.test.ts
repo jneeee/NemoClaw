@@ -7,7 +7,11 @@
 // interaction pattern until the module is migrated to ESM imports.
 
 import { describe, expect, it, vi } from "vitest";
+import fs from "node:fs";
 import http from "node:http";
+import path from "node:path";
+
+const ROOT = path.resolve(import.meta.dirname, "..");
 
 /** Mirror of unloadOllamaModels() from src/lib/onboard-ollama-proxy.ts */
 function unloadOllamaModels() {
@@ -182,5 +186,27 @@ describe("Ollama GPU cleanup", () => {
 
     httpGetSpy.mockRestore();
     httpRequestSpy.mockRestore();
+  });
+});
+
+describe("Ollama cleanup call sites", () => {
+  const nemoclawSrc = fs.readFileSync(path.join(ROOT, "src/nemoclaw.ts"), "utf-8");
+  const proxySrc = fs.readFileSync(path.join(ROOT, "src/lib/onboard-ollama-proxy.ts"), "utf-8");
+  const servicesSrc = fs.readFileSync(path.join(ROOT, "src/lib/services.ts"), "utf-8");
+
+  it("keeps the mirrored unload implementation marked in the source", () => {
+    expect(proxySrc).toContain("test/ollama-gpu-cleanup.test.js mirrors this function");
+  });
+
+  it("does not unload directly before sandbox service cleanup", () => {
+    const destroyStart = nemoclawSrc.indexOf("async function sandboxDestroy");
+    const cleanupCall = nemoclawSrc.indexOf("cleanupSandboxServices(sandboxName", destroyStart);
+    expect(destroyStart).toBeGreaterThan(-1);
+    expect(cleanupCall).toBeGreaterThan(destroyStart);
+    expect(nemoclawSrc.slice(destroyStart, cleanupCall)).not.toContain("unloadOllamaModels");
+  });
+
+  it("documents why stopAll unloads without checking a provider", () => {
+    expect(servicesSrc).toContain("stopAll() has no sandbox/provider context");
   });
 });

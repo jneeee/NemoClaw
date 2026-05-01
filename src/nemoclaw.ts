@@ -3027,8 +3027,7 @@ async function sandboxDestroy(sandboxName: string, args: string[] = []): Promise
   }
 
   if (sb?.provider?.includes("ollama")) {
-    const { unloadOllamaModels, killStaleProxy } = require("./lib/onboard-ollama-proxy");
-    unloadOllamaModels();
+    const { killStaleProxy } = require("./lib/onboard-ollama-proxy");
     killStaleProxy();
   }
 

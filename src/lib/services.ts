@@ -250,6 +250,8 @@ export function stopAll(opts: ServiceOptions = {}): void {
   ensurePidDir(pidDir);
 
   try {
+    // stopAll() has no sandbox/provider context, so unload Ollama models
+    // unconditionally as a best-effort cleanup before stopping host services.
     const { unloadOllamaModels } = require("./onboard-ollama-proxy");
     unloadOllamaModels();
   } catch {
