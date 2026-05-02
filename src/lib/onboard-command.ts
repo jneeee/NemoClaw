@@ -57,6 +57,26 @@ function printOnboardUsage(writer: (message?: string) => void, noticeAcceptFlag:
   }
 }
 
+function formatSandboxNameRules(): string {
+  return "Use lowercase letters, numbers, and hyphens only; start with a letter; end with a letter or number; no spaces.";
+}
+
+function validateSandboxNameOption(nameValue: string, error: (message?: string) => void, exit: (code: number) => never): string {
+  if (nameValue.length > 63) {
+    error(`  sandbox name too long (max 63 chars): '${nameValue.slice(0, 20)}...'`);
+    error(`  ${formatSandboxNameRules()}`);
+    exit(1);
+  }
+  if (!/^[a-z]([a-z0-9-]*[a-z0-9])?$/.test(nameValue)) {
+    error(
+      `  Invalid sandbox name: '${nameValue}'. Must start with a letter and contain only lowercase alphanumerics with optional internal hyphens.`,
+    );
+    error(`  ${formatSandboxNameRules()}`);
+    exit(1);
+  }
+  return nameValue;
+}
+
 export function parseOnboardArgs(
   args: string[],
   noticeAcceptFlag: string,
@@ -98,7 +118,7 @@ export function parseOnboardArgs(
       printOnboardUsage(error, noticeAcceptFlag);
       exit(1);
     }
-    sandboxName = nameValue;
+    sandboxName = validateSandboxNameOption(nameValue, error, exit);
     parsedArgs.splice(nameIdx, 2);
   }
 

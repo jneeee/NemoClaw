@@ -3761,7 +3761,7 @@ async function promptValidatedSandboxName(agent: AgentDefinition | null = null) 
   const defaultSandboxName = getSandboxPromptDefault(agent);
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const nameAnswer = await promptOrDefault(
-      `  Sandbox name (lowercase, starts with letter, hyphens ok) [${defaultSandboxName}]: `,
+      `  Sandbox name (lowercase letters, numbers, hyphens; no spaces) [${defaultSandboxName}]: `,
       "NEMOCLAW_SANDBOX_NAME",
       defaultSandboxName,
     );

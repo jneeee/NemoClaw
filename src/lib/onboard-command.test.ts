@@ -253,6 +253,25 @@ describe("onboard command", () => {
     expect(errors.join("\n")).toContain("--name requires a sandbox name");
   });
 
+  it("exits early when --name contains spaces", () => {
+    const errors: string[] = [];
+    expect(() =>
+      parseOnboardArgs(
+        ["--name", "sk assosan"],
+        "--yes-i-accept-third-party-software",
+        "NEMOCLAW_ACCEPT_THIRD_PARTY_SOFTWARE",
+        {
+          env: {},
+          error: (message = "") => errors.push(message),
+          exit: exitWithPrefixedCode,
+        },
+      ),
+    ).toThrow("exit:1");
+    const errorText = errors.join("\n");
+    expect(errorText).toContain("Invalid sandbox name");
+    expect(errorText).toContain("no spaces");
+  });
+
   it("exits when --from is missing its Dockerfile path", () => {
     expect(() =>
       parseOnboardArgs(
