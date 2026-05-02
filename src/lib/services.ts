@@ -428,6 +428,10 @@ export function stopAll(opts: ServiceOptions = {}): void {
     warn("Hint: run 'nemoclaw stop' with a registered sandbox or set NEMOCLAW_SANDBOX_NAME.");
   }
 
+  // stopAll() may be called outside an onboarded sandbox context, so it cannot
+  // cheaply know whether the active provider is Ollama. The unload request is
+  // local and best-effort; calling it unconditionally keeps generic shutdowns
+  // safe without needing sandbox registry state.
   try {
     const { unloadOllamaModels } = require("./onboard-ollama-proxy");
     unloadOllamaModels();
