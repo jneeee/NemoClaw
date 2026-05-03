@@ -172,11 +172,28 @@ $ openshell term
 ```
 
 This is useful when you want to test a destination before deciding whether it belongs in a permanent preset or custom policy file.
+Use `openshell term` on the host where the sandbox is running, including after SSHing into a remote Brev or GPU instance.
+Approvals made in the TUI affect only the running session; convert repeated approvals into a NemoClaw preset with `policy-add --from-file` or a repository preset file.
 
 ## Policy Presets
 
 NemoClaw ships preset policy files for common integrations in `nemoclaw-blueprint/policies/presets/`.
 Apply a preset as-is or use it as a starting template for a custom policy.
+
+Use NemoClaw commands first when a built-in preset covers the integration you need:
+
+| Integration goal | Start with |
+|------------------|------------|
+| Telegram bot messaging | `nemoclaw <name> policy-add telegram` |
+| Email or calendar through Microsoft 365 / Outlook | `nemoclaw <name> policy-add outlook` |
+| Slack or Discord messaging | `nemoclaw <name> policy-add slack` or `nemoclaw <name> policy-add discord` |
+| GitHub-backed notes, issues, or repository workflows | `nemoclaw <name> policy-add github` |
+| Python or Node.js package installation | `nemoclaw <name> policy-add pypi` or `nemoclaw <name> policy-add npm` |
+| Google Drive, custom notes apps, or internal APIs | Create a custom preset with `nemoclaw <name> policy-add --from-file` |
+
+Run these commands on the host where NemoClaw manages the sandbox.
+For a remote Brev, DGX, or SSH-hosted sandbox, SSH to that host first, then run the `nemoclaw` command there.
+Drop to OpenShell only when you need to approve a live blocked request in the TUI or replace/edit the raw live policy with `openshell policy get` and `openshell policy set`.
 
 During onboarding, the [policy tier](../reference/network-policies.md#policy-tiers) you select determines which presets are enabled by default.
 You can add or remove individual presets in the interactive preset screen that follows tier selection.
