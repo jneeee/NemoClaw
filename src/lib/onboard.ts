@@ -3781,7 +3781,7 @@ async function promptValidatedSandboxName(agent: AgentDefinition | null = null) 
   const defaultSandboxName = getSandboxPromptDefault(agent);
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const nameAnswer = await promptOrDefault(
-      `  Sandbox name (lowercase, starts with letter, hyphens ok) [${defaultSandboxName}]: `,
+      `  Sandbox name (lowercase letters, numbers, hyphens; no spaces) [${defaultSandboxName}]: `,
       "NEMOCLAW_SANDBOX_NAME",
       defaultSandboxName,
     );
@@ -3810,7 +3810,7 @@ async function promptValidatedSandboxName(agent: AgentDefinition | null = null) 
       console.error("  Names must start with a letter, not a digit.");
     } else {
       console.error("  Names must be lowercase, contain only letters, numbers, and hyphens,");
-      console.error("  must start with a letter, and end with a letter or number.");
+      console.error("  must start with a letter, end with a letter or number, and contain no spaces.");
     }
 
     // Non-interactive runs cannot re-prompt — abort so the caller can fix the

@@ -268,7 +268,7 @@ function validateName(name: string, label = "name"): string {
   }
   if (!/^[a-z]([a-z0-9-]*[a-z0-9])?$/.test(name)) {
     throw new Error(
-      `Invalid ${label}: '${name}'. Must start with a letter and contain only lowercase alphanumerics with optional internal hyphens.`,
+      `Invalid ${label}: '${name}'. Must start with a letter, contain only lowercase letters, numbers, and optional internal hyphens, and contain no spaces.`,
     );
   }
   return name;

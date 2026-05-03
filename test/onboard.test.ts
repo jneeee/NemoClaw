@@ -6585,6 +6585,7 @@ const { createSandbox } = require(${onboardPath});
     assert.match(fnBody, /MAX_ATTEMPTS/);
     assert.match(fnBody, /for\s*\(let attempt/);
     assert.match(fnBody, /Please try again/);
+    assert.match(fnBody, /no spaces/);
     // Exits after too many invalid attempts
     assert.match(fnBody, /Too many invalid attempts/);
     // Non-interactive still exits within this function

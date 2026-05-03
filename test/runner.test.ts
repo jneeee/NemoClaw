@@ -288,6 +288,7 @@ describe("validateName", () => {
     expect(() => validateName("1sandbox")).toThrow(/Invalid/);
     expect(() => validateName("MyBox")).toThrow(/Invalid/);
     expect(() => validateName("my_box")).toThrow(/Invalid/);
+    expect(() => validateName("my sandbox")).toThrow(/no spaces/);
     expect(() => validateName("-leading")).toThrow(/Invalid/);
     expect(() => validateName("trailing-")).toThrow(/Invalid/);
   });
