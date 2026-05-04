@@ -429,6 +429,8 @@ export function stopAll(opts: ServiceOptions = {}): void {
   }
 
   try {
+    // stopAll has no registry context, so unload defensively instead of
+    // checking whether the selected sandbox used Ollama.
     const { unloadOllamaModels } = require("./onboard-ollama-proxy");
     unloadOllamaModels();
   } catch {

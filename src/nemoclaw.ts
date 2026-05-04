@@ -2211,8 +2211,11 @@ function cleanupSandboxServices(
 
   const sb = registry.getSandbox(sandboxName);
   if (sb?.provider?.includes("ollama")) {
-    const { unloadOllamaModels } = require("./lib/onboard-ollama-proxy");
-    unloadOllamaModels();
+    const { unloadOllamaModels, killStaleProxy } = require("./lib/onboard-ollama-proxy");
+    if (!stopHostServices) {
+      unloadOllamaModels();
+    }
+    killStaleProxy();
   }
 
   try {
@@ -2294,12 +2297,6 @@ async function sandboxDestroy(sandboxName: string, args: string[] = []): Promise
     // be recorded in the registry (e.g. older sandboxes).  Suppress output
     // so the user doesn't see "No such container" noise when no NIM exists.
     nim.stopNimContainer(sandboxName, { silent: true });
-  }
-
-  if (sb?.provider?.includes("ollama")) {
-    const { unloadOllamaModels, killStaleProxy } = require("./lib/onboard-ollama-proxy");
-    unloadOllamaModels();
-    killStaleProxy();
   }
 
   console.log(`  Deleting sandbox '${sandboxName}'...`);
