@@ -205,6 +205,31 @@ describe("sandbox provisioning: procps debug tools (#2343)", () => {
     }
   });
 
+  it("Hermes base apt layer requests mount support and debug packages", () => {
+    const dockerfile = fs.readFileSync(HERMES_DOCKERFILE_BASE, "utf-8");
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-hermes-base-apt-"));
+    const lists = path.join(tmp, "apt-lists");
+    fs.mkdirSync(lists);
+    const command = dockerRunCommandBetween(
+      dockerfile,
+      "RUN apt-get update",
+      "# gosu for privilege separation",
+    ).replaceAll("/var/lib/apt/lists", lists);
+
+    try {
+      const { result, calls } = runLoggedDockerShell(command, tmp, [
+        'apt-get() { printf "apt-get %s\\n" "$*" >> "$call_log"; }',
+      ]);
+      expect(result.status).toBe(0);
+      expect(calls).toContain("apt-get update");
+      expect(calls).toContain("gnupg=2.2.40-1.1+deb12u2");
+      expect(calls).toContain("procps=2:4.0.2-3");
+      expect(calls).toContain("openssh-sftp-server=1:9.2p1-2+deb12u9");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it("runtime hardening installs procps when a stale base lacks ps", () => {
     const dockerfile = fs.readFileSync(DOCKERFILE, "utf-8");
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-procps-"));
