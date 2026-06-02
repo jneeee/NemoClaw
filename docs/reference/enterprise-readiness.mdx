@@ -1,0 +1,69 @@
+---
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+title: "Enterprise Readiness Guidance"
+sidebar-title: "Enterprise Readiness"
+description: "Summarize NemoClaw enterprise readiness, support boundaries, admin capability status, and customer-facing guidance."
+description-agent: "Summarizes NemoClaw enterprise readiness, support boundaries, admin capability status, and recommended customer-facing wording. Use when evaluating NemoClaw for enterprise deployment, egress approval, admin controls, identity, monitoring, quotas, audit, or support boundaries."
+keywords: ["nemoclaw enterprise readiness", "nemoclaw admin controls", "nemoclaw support boundaries"]
+content:
+  type: "reference"
+---
+# Enterprise Readiness Guidance
+
+Use this page to answer enterprise evaluation questions consistently. NemoClaw is an open-source reference stack for running AI agents inside OpenShell sandboxes; it is suitable for pilots and controlled evaluations, but it is not a turnkey enterprise control plane.
+
+## Readiness Summary
+
+| Area | Current guidance | Workaround or owner |
+| --- | --- | --- |
+| Egress approvals | Runtime network requests can be reviewed and approved in the OpenShell TUI. Session approvals are temporary unless added to policy YAML. | Pre-approve required destinations with policy presets or custom YAML. Platform and security teams own final allowlist approval. |
+| Policy visibility | Baseline network policies are stored as YAML and can be inspected before deployment. Runtime approval history is visible through the TUI while the sandbox is active. | Keep policy files in your normal change-control process. Export or record approvals manually when required. |
+| Brev reliability | Brev is a supported hosted evaluation path, but instance lifecycle, capacity, and cloud availability are platform-owned. | For critical demos, start early, keep backup capacity available, and use CLI deployment to a managed host when Brev availability is a blocker. |
+| Upgrade path | NemoClaw is under active development and interfaces may change. Upgrades are operator-driven. | Test upgrades in a separate sandbox and keep workspace backups before replacing an existing environment. |
+| Model and provider switching | NemoClaw supports configured provider selection and documented provider switching flows. Provider credentials, billing, rate limits, and model terms remain provider-owned. | Validate the selected model with your target agent and tools before production-like use. Keep provider-specific keys and quotas managed outside NemoClaw. |
+| Multi-agent usage | Task-specific sub-agents are supported for evaluation, but large multi-agent fleets and cross-agent orchestration are not treated as a mature managed service. | Start with one primary agent and a small number of task-specific sub-agents. Monitor behavior and isolate experiments by sandbox. |
+| Monitoring | NemoClaw exposes sandbox activity, logs, and runtime state through documented CLI and TUI workflows. | Integrate manually with your existing operational runbooks. Enterprise SIEM and fleet observability are platform-owned or custom work. |
+
+## Admin and Control-Plane Capability Matrix
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Sandbox lifecycle controls | Supported today | Operators can onboard, start, stop, update, back up, restore, and destroy sandboxes with the CLI. |
+| Network policy configuration | Supported today | Baseline egress policy is YAML-based. Runtime approvals are available through the TUI. |
+| Provider and model selection | Supported today | NemoClaw documents provider setup and switching; provider availability, credentials, and rate limits are external. |
+| Per-sandbox monitoring | Supported today | Operators can inspect activity, logs, gateway state, and sandbox health for individual sandboxes. |
+| Centralized policy administration | Manual-only | Store and review policy YAML in your existing source-control and approval workflow. |
+| Quotas and budgets | Partner or platform-owned | Enforce API quotas, spend limits, and GPU budgets in the model provider, Brev, cloud, or enterprise platform layer. |
+| Audit retention | Manual-only | NemoClaw does not provide a centralized audit retention service. Capture logs and approval decisions with your existing tooling. |
+| Identity integration and SSO | Partner or platform-owned | Use the identity controls of Brev, cloud infrastructure, source control, and model providers. NemoClaw does not provide its own SSO service. |
+| Fleet management dashboard | Roadmap-only | Treat NemoClaw as per-sandbox tooling today, not as a centralized fleet administration product. |
+| Role-based access control in NemoClaw | Out of scope today | Apply access controls at the host, cloud, provider, and repository layers. |
+
+## Support Boundaries
+
+NemoClaw maintainers can help with documented installation, onboarding, policy configuration, sandbox lifecycle, provider setup, and reproducible CLI or runtime issues.
+
+The following areas usually belong to the customer, partner, or hosting platform:
+
+- Corporate egress approval decisions and allowlist ownership.
+- Provider account access, model availability, billing, quotas, and rate limits.
+- Brev account, cloud capacity, and VM lifecycle beyond NemoClaw setup logic.
+- Enterprise identity, SSO, RBAC, audit retention, SIEM, and compliance workflows.
+- Production change management, backup retention, and incident response runbooks.
+
+## Recommended Customer Wording
+
+Use wording like the following in field or customer conversations:
+
+> NemoClaw is best positioned as an open-source reference stack and evaluation accelerator for sandboxed AI agents. It provides practical controls for sandbox lifecycle, network policy, runtime approvals, provider configuration, and per-sandbox monitoring. Enterprise-wide controls such as centralized RBAC, audit retention, quotas, identity integration, and fleet governance should be supplied by the surrounding platform or managed through existing enterprise processes.
+
+When a capability is not built into NemoClaw, avoid promising it as product functionality. Instead, identify the owning layer and describe the manual or platform-backed path.
+
+## Related Topics
+
+- [Approve or Deny Agent Network Requests](/network-policy/approve-network-requests)
+- [Customize the Sandbox Network Policy](/network-policy/customize-network-policy)
+- [Switch Inference Providers](/inference/switch-inference-providers)
+- [Monitor Sandbox Activity](/monitoring/monitor-sandbox-activity)
+- [Backup and Restore](/manage-sandboxes/backup-restore)
