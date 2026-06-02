@@ -132,6 +132,9 @@ navigation:
       - page: "Network Policies"
         path: reference/network-policies.mdx
         slug: network-policies
+      - page: "Launch Support Matrix"
+        path: reference/platform-support-matrix.mdx
+        slug: platform-support-matrix
       - page: "Troubleshooting"
         path: reference/troubleshooting.mdx
         slug: troubleshooting

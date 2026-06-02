@@ -1,0 +1,64 @@
+---
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+title: "Launch Support Matrix"
+sidebar-title: "Launch Support Matrix"
+description: "Launch-facing NemoClaw platform and inference support status, caveats, and unsupported combinations."
+description-agent: "Use when describing NemoClaw platform readiness, launch claims, supported local inference paths, caveats, and unsupported combinations."
+keywords: ["nemoclaw platform support", "nemoclaw launch support", "nemoclaw local inference support"]
+content:
+  type: "reference"
+---
+
+# Launch Support Matrix
+
+Use this page as the source of truth for launch-facing NemoClaw support claims.
+Avoid describing roadmap or experimental combinations as generally available.
+
+## Status Vocabulary
+
+| Status | Meaning |
+|---|---|
+| Validated | Tested by the project for the stated platform, runtime, and setup assumptions. |
+| Supported with caveats | Supported for the stated path, but requires additional setup, has known limitations, or depends on host resources. |
+| Experimental | Available behind an experimental path or environment flag. Interfaces, defaults, and setup may change. |
+| Roadmap only | Planned or under evaluation. Do not claim launch support. |
+| Unsupported | Not a supported NemoClaw launch path. |
+
+## Platform Matrix
+
+| Platform | Launch status | Inference paths | Setup assumptions and caveats |
+|---|---|---|---|
+| Ubuntu Linux on NVIDIA GPU workstation or server | Validated for hosted providers; supported with caveats for local inference | NVIDIA Endpoints, OpenAI, Anthropic, Google Gemini, compatible OpenAI/Anthropic endpoints, local Ollama, already-running local vLLM, managed local vLLM with opt-in | Requires Node.js 22.16 or later, Docker, OpenShell, and sufficient memory. Managed local vLLM on generic NVIDIA GPU hosts requires `NEMOCLAW_EXPERIMENTAL=1` or `NEMOCLAW_PROVIDER=install-vllm`. |
+| DGX Spark | Supported with caveats | Hosted providers, local Ollama, already-running local vLLM, managed local vLLM | Managed local vLLM appears by default. Model choice and concurrency depend on available GPU memory and the selected runtime. |
+| DGX Station | Supported with caveats | Hosted providers, local Ollama, already-running local vLLM, managed local vLLM | Managed local vLLM appears by default. Validate model fit, driver/runtime availability, and Docker GPU access before demos. |
+| Windows with WSL | Supported with caveats | Hosted providers; local inference only when Docker, WSL networking, and host GPU access are configured | Use the Windows prerequisites flow. Treat local GPU demos as configuration-sensitive and verify them on the target machine. |
+| macOS | Supported with caveats for hosted providers; unsupported for NVIDIA GPU local inference | Hosted providers and local Ollama when available on the host | Docker Desktop must be running. Do not claim NVIDIA GPU local vLLM or NIM support on macOS. |
+| RTX workstation paths | Supported with caveats on Ubuntu; experimental for managed local vLLM opt-in | Hosted providers, local Ollama, already-running local vLLM, managed local vLLM with opt-in | Validate NVIDIA driver, container GPU access, model memory fit, and warmup before field demos. |
+| Roadmap-only targets | Roadmap only | Not launch-supported | Do not claim support for unvalidated operating systems, managed local inference runtimes, or hardware targets until they move into a supported status above. |
+
+## Inference and Runtime Matrix
+
+| Path | Launch status | Notes |
+|---|---|---|
+| NVIDIA-hosted endpoints | Validated | Recommended launch path for NVIDIA-hosted models. Credentials remain on the host through OpenShell provider routing. |
+| OpenAI, Anthropic, Google Gemini, and compatible endpoints | Validated | Use the onboard wizard provider options. The sandbox calls `inference.local`; provider credentials stay on the host. |
+| Local Ollama | Supported with caveats | Available when Ollama is installed or running on the host. Model capability and tool-calling quality vary by model. |
+| Local vLLM, already running on `localhost:8000` | Supported with caveats | NemoClaw can route to an existing OpenAI-compatible vLLM server. The operator owns model loading, health, and GPU capacity. |
+| Managed local vLLM on DGX Spark or DGX Station | Supported with caveats | Appears by default. Validate the selected model and runtime on the exact target system before launch demonstrations. |
+| Managed local vLLM on generic Ubuntu NVIDIA GPU hosts | Experimental | Requires explicit opt-in with `NEMOCLAW_EXPERIMENTAL=1` or `NEMOCLAW_PROVIDER=install-vllm`. |
+| Local NVIDIA NIM | Experimental | Requires `NEMOCLAW_EXPERIMENTAL=1` and a NIM-capable GPU. |
+| macOS NVIDIA GPU local inference | Unsupported | macOS is not a launch path for NVIDIA GPU local vLLM or NIM. |
+| Unvalidated hardware, models, or runtimes | Roadmap only | Do not present as supported until validated and documented. |
+
+## Launch-Facing Claims
+
+Use these claims in product, docs, demo, and field conversations:
+
+- NemoClaw runs agents in OpenShell sandboxes and routes inference through `inference.local`, keeping provider credentials on the host.
+- Hosted provider onboarding is the recommended validated launch path.
+- Local inference is available, but support depends on platform, GPU, runtime, model fit, and explicit experimental flags where documented.
+- DGX Spark and DGX Station are supported with caveats for managed local vLLM; verify the demo configuration on the target system.
+- Windows/WSL and macOS require platform-specific setup. Do not imply every local NVIDIA GPU inference path works on those systems.
+
+Do not claim general support for unvalidated models, hardware targets, or local runtimes that are listed as experimental, roadmap only, or unsupported on this page.
