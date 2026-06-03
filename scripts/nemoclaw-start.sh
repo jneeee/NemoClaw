@@ -1924,6 +1924,18 @@ _CIAO_GUARD_SOURCE="/usr/local/lib/nemoclaw/preloads/ciao-network-guard.js"
 emit_sandbox_sourced_file "$_CIAO_GUARD_SCRIPT" <"$_CIAO_GUARD_SOURCE"
 export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--require $_CIAO_GUARD_SCRIPT"
 
+# Google public signing-certificate fetch fix.
+# Some verification libraries attach a per-request undici dispatcher for
+# Google cert fetches, which bypasses NemoClaw's sandbox proxy routing.
+# The preload removes those per-request dispatchers only for Google's public
+# signing-certificate endpoints so the request uses the host/global proxy path.
+_GOOGLEAPIS_CERT_FIX_SCRIPT="/tmp/nemoclaw-googleapis-cert-fetch-fix.js"
+_GOOGLEAPIS_CERT_FIX_SOURCE="/usr/local/lib/nemoclaw/preloads/googleapis-cert-fetch-fix.js"
+if [ -f "$_GOOGLEAPIS_CERT_FIX_SOURCE" ]; then
+  emit_sandbox_sourced_file "$_GOOGLEAPIS_CERT_FIX_SCRIPT" <"$_GOOGLEAPIS_CERT_FIX_SOURCE"
+  export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--require $_GOOGLEAPIS_CERT_FIX_SCRIPT"
+fi
+
 # WebSocket CONNECT tunnel fix (NemoClaw#1570).
 # The `ws` library calls https.request() for wss:// WebSocket upgrades.
 # EnvHttpProxyAgent (NODE_USE_ENV_PROXY=1) sends a forward proxy request
