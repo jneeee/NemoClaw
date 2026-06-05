@@ -1101,6 +1101,12 @@ refresh_openclaw_provider_placeholders() {
   [ -f "$config_file" ] || return 0
 
   local keys="TELEGRAM_BOT_TOKEN DISCORD_BOT_TOKEN SLACK_BOT_TOKEN SLACK_APP_TOKEN BRAVE_API_KEY"
+  local extra_key
+  for extra_key in ${NEMOCLAW_EXTRA_PLACEHOLDER_KEYS:-}; do
+    if [[ "$extra_key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+      keys="${keys} ${extra_key}"
+    fi
+  done
 
   if [ -L "$config_file" ] || [ -L "$hash_file" ]; then
     printf '[SECURITY] Refusing provider placeholder refresh — config or hash path is a symlink\n' >&2

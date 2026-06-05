@@ -3034,6 +3034,43 @@ describe("provider placeholder refresh (#4251)", () => {
     expect(run.result.stderr).not.toContain("v42_TELEGRAM_BOT_TOKEN");
   });
 
+  it("rewrites placeholders for valid extra provider keys", () => {
+    const scoped = "openshell:resolve:env:v42_TELEGRAM_BOT_TOKEN_AGENT_A";
+    const invalidScoped = "openshell:resolve:env:v42_TELEGRAM_BOT_TOKEN_AGENT_B";
+    const run = runRefresh(
+      {
+        channels: {
+          telegram: {
+            accounts: {
+              agentA: {
+                botToken: "openshell:resolve:env:TELEGRAM_BOT_TOKEN_AGENT_A",
+              },
+              agentB: {
+                botToken: "openshell:resolve:env:TELEGRAM-BOT-TOKEN-AGENT-B",
+              },
+            },
+          },
+        },
+      },
+      {
+        NEMOCLAW_EXTRA_PLACEHOLDER_KEYS:
+          "TELEGRAM_BOT_TOKEN_AGENT_A TELEGRAM-BOT-TOKEN-AGENT-B",
+        TELEGRAM_BOT_TOKEN_AGENT_A: scoped,
+        "TELEGRAM-BOT-TOKEN-AGENT-B": invalidScoped,
+      },
+    );
+
+    expect(run.result.status, run.result.stderr).toBe(0);
+    expect(run.config.channels.telegram.accounts.agentA.botToken).toBe(scoped);
+    expect(run.config.channels.telegram.accounts.agentB.botToken).toBe(
+      "openshell:resolve:env:TELEGRAM-BOT-TOKEN-AGENT-B",
+    );
+    expect(run.result.stderr).toContain(
+      "Refreshed provider placeholders from OpenShell runtime env: TELEGRAM_BOT_TOKEN_AGENT_A",
+    );
+    expect(run.result.stderr).not.toContain("TELEGRAM-BOT-TOKEN-AGENT-B");
+  });
+
   it("does not write raw provider credentials into openclaw.json", () => {
     const run = runRefresh(
       {
